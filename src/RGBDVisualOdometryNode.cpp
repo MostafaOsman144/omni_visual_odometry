@@ -71,9 +71,6 @@ void OdometryNodeRGBD::ImagesCallbackFunction(const sensor_msgs::ImageConstPtr& 
   cv_rgb_image = cv_ptrRGB->image;
   cv_depth_image = cv_ptrD->image;
 
-  cv::imshow("depth_image", cv_depth_image);
-  cv::waitKey(10);
-  std::cout << "Hamada" << std::endl;
   cv::cvtColor(cv_rgb_image, cv_rgb_image, cv::COLOR_BGR2GRAY);
 
   //cv::namedWindow("Checking if Working");
