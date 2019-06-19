@@ -1,0 +1,12 @@
+# Intrinics for the rgbd camera used in visual odometry
+# X position of the optical center
+cx: 319.5
+
+# Y position of the optical center
+cy: 239.5
+
+# Focal length in X direction
+fx: 525.0
+
+# Focal length in Y direction
+fy: 525.0
