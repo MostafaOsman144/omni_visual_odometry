@@ -25,11 +25,17 @@ class OdometryNodeRGBD
 
         omni_visual_odometry::visual_odometry* rgbdOdometryObject;
 
+        ros::NodeHandle* node_handle;
+        ros::NodeHandle* private_node_handle;
+
     public:
-        OdometryNodeRGBD(ros::NodeHandle& node_handle, omni_visual_odometry::visual_odometry*);
+        OdometryNodeRGBD(ros::NodeHandle& node_handle, ros::NodeHandle& private_node_handle,
+                         omni_visual_odometry::visual_odometry*);
         ~OdometryNodeRGBD();
 
         void ImagesCallbackFunction(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
+
+        void ReadIntrinicsFromParamterFile();
 };
 
 

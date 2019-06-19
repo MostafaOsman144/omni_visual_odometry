@@ -11,6 +11,15 @@ namespace omni_visual_odometry
 class visual_odometry
 {
 private:
+    struct CameraIntrinsics
+    {
+        double cx; //x posiiton of the optical center
+        double cy; //y position of the optical center
+        double fx; //focal length in x direction
+        double fy; //focal length in y direction
+
+    };
+    
     cv::Mat current_rgb_frame;
     cv::Mat current_d_frame;
     cv::Mat previous_rgb_frame;
@@ -42,14 +51,25 @@ private:
     // Lowe's filtering threshold
     const float threshold;
 
+    // PointClouds for previous and current frames
+    std::vector<cv::Point3f> current_pointcloud;
+    std::vector<cv::Point3f> previous_pointcloud;
     
+    CameraIntrinsics rgbd_camera_intrinsics;
 
 public:
     visual_odometry(int);
     ~visual_odometry();
     void ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image);
     void ComputeMatchedFeatures();
-    void MakeCurrentPrevious();
+    void TransitionToNextTimeStep();
+    void ComputePointCloud(const cv::Mat&, const std::vector<cv::KeyPoint>&, std::vector<cv::Point3f>&);
+    void ComputePreviousPointCloud();
+    void ComputeCurrentPointCloud();
+    void SetIntrinsicParams(double cx, double cy, double fx, double fy);
+    void InitializeFirstFrame();
+    void ComputeTransformation();
+
 };
 
 }

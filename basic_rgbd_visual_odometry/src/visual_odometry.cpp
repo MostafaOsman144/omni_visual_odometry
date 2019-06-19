@@ -11,7 +11,9 @@ visual_odometry::visual_odometry(int threshold_input)
     if(threshold > 1 || threshold < 0)
     {
         std::cerr << "The value used for the threshold is incorrect, please use a value between 0 and 1" << std::endl;
+        std::cout << std::endl;
     }
+
 }
 
 visual_odometry::~visual_odometry()
@@ -22,22 +24,36 @@ visual_odometry::~visual_odometry()
 void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image)
 {
     if(first_frame)
-    {
-        previous_rgb_frame = rgb_image;
-        previous_d_frame = depth_image;
+    {   
+        previous_rgb_frame = rgb_image.clone();
+        previous_d_frame = depth_image.clone();
 
-        orb_detector->detectAndCompute(previous_rgb_frame, cv::noArray(), previous_frame_keypoints, previous_frame_descriptor);
-        first_frame = false;
+        InitializeFirstFrame();
 
     }
     else
     {
-        current_rgb_frame = rgb_image;
-        current_d_frame = depth_image;
+        current_rgb_frame = rgb_image.clone();
+        current_d_frame = depth_image.clone();
 
+        // Step 1 -> Compute the feature matches between the two successive frames
         ComputeMatchedFeatures();
 
-        MakeCurrentPrevious();
+        // Step 2 -> Compute the 3D location of the matched points
+        if(!matched_points_previous.empty() && !matched_points_current.empty())
+        {
+            ComputePointCloud(previous_d_frame, matched_points_previous, previous_pointcloud);
+            ComputePointCloud(current_d_frame, matched_points_current, current_pointcloud);
+        }
+        else
+        {
+            std::cout << "No Matching points are there to compute the 3D positions" << std::endl;
+            std::cout << std::endl;
+        }
+        
+        //ComputeTransformation();
+
+        TransitionToNextTimeStep();
 
     }
 
@@ -64,7 +80,8 @@ void visual_odometry::ComputeMatchedFeatures()
 
     if(good_matched_points.empty())
     {
-        std::cout << "failed" << std::endl;
+        std::cout << "Could not find good matches in this two consecutive frames" << std::endl;
+        std::cout << std::endl;
     }
 
     //cv::Mat featuresShowing;
@@ -80,23 +97,130 @@ void visual_odometry::ComputeMatchedFeatures()
     //cv::imshow("Features",featuresShowing);
     cv::waitKey(10);
 
-
 }
 
-void visual_odometry::MakeCurrentPrevious()
+void visual_odometry::TransitionToNextTimeStep()
 {
     previous_rgb_frame = current_rgb_frame;
     previous_d_frame = current_d_frame;
-
     previous_frame_descriptor = current_frame_descriptor;
     previous_frame_keypoints = current_frame_keypoints;
-
+    
     matched_points.clear();
     good_matched_points.clear();
 
-}
+    matched_points_current.clear();
+    matched_points_previous.clear();
+
+    current_pointcloud.clear();
+    previous_pointcloud.clear();
 
 }
 
+void visual_odometry::ComputePointCloud(const cv::Mat& depth_image, const std::vector<cv::KeyPoint>& matched_keypoints,
+                                        std::vector<cv::Point3f>& point_cloud)
+{
+    for(size_t i = 0; i < matched_keypoints.size(); i++)
+    {   
+        double z = depth_image.at<float>(matched_keypoints[i].pt);
+        if(z != 0 && !std::isnan(z))
+        {
+            double x = (matched_keypoints[i].pt.x - rgbd_camera_intrinsics.cx) * z / rgbd_camera_intrinsics.fx;
+            double y = (matched_keypoints[i].pt.y - rgbd_camera_intrinsics.cy) * z / rgbd_camera_intrinsics.fy;
 
+            point_cloud.push_back(cv::Point3f(x, y, z));
+        }
+    }
+}
 
+void visual_odometry::ComputeCurrentPointCloud()
+{
+    for(size_t i = 0; i < matched_points_current.size(); i++)
+    {   
+        double z = current_d_frame.at<float>(matched_points_current[i].pt);
+        if(z != 0 && !std::isnan(z))
+        {
+            double x = (matched_points_current[i].pt.x - rgbd_camera_intrinsics.cx) * z / rgbd_camera_intrinsics.fx;
+            double y = (matched_points_current[i].pt.y - rgbd_camera_intrinsics.cy) * z / rgbd_camera_intrinsics.fy;
+
+            current_pointcloud.push_back(cv::Point3f(x, y, z));
+        }
+    }
+}
+
+void visual_odometry::ComputePreviousPointCloud()
+{
+    for(size_t i = 0; i < matched_points_previous.size(); i++)
+    {   
+        double z = previous_d_frame.at<float>(matched_points_previous[i].pt);
+        if(z != 0 && !std::isnan(z))
+        {
+            double x = (matched_points_previous[i].pt.x - rgbd_camera_intrinsics.cx) * z / rgbd_camera_intrinsics.fx;
+            double y = (matched_points_previous[i].pt.y - rgbd_camera_intrinsics.cy) * z / rgbd_camera_intrinsics.fy;
+
+            previous_pointcloud.push_back(cv::Point3f(x, y, z));
+        }
+    }
+}
+
+void visual_odometry::SetIntrinsicParams(double cx, double cy, double fx, double fy)
+{
+    rgbd_camera_intrinsics.cx = cx;
+    rgbd_camera_intrinsics.cy = cy;
+    rgbd_camera_intrinsics.fx = fx;
+    rgbd_camera_intrinsics.fy = fy;
+
+    std::cout << "The intrinsics were defined successfully. The values are:" << std::endl;
+    std::cout << "cx = " << rgbd_camera_intrinsics.cx << std::endl;
+    std::cout << "cy = " << rgbd_camera_intrinsics.cy << std::endl;
+    std::cout << "fx = " << rgbd_camera_intrinsics.fx << std::endl;
+    std::cout << "fy = " << rgbd_camera_intrinsics.fy << std::endl;
+    std::cout << std::endl;
+
+}
+
+void visual_odometry::InitializeFirstFrame()
+{
+    orb_detector->detectAndCompute(previous_rgb_frame, cv::noArray(), previous_frame_keypoints, previous_frame_descriptor);
+
+    if(previous_frame_keypoints.empty())
+    {
+        std::cerr << "Failed to initialize, no keypoints were found." << std::endl;
+        std::cout << std::endl;
+    }
+
+    for(size_t i = 0; i < previous_frame_keypoints.size(); i++)
+    {
+        double z = previous_d_frame.at<float>(previous_frame_keypoints[i].pt);
+        
+        if(z != 0 || std::isnan(z))
+        {
+            double x = (previous_frame_keypoints[i].pt.x - rgbd_camera_intrinsics.cx) * z / rgbd_camera_intrinsics.fx;
+            double y = (previous_frame_keypoints[i].pt.y - rgbd_camera_intrinsics.cy) * z / rgbd_camera_intrinsics.fy;
+
+            previous_pointcloud.push_back(cv::Point3f(x, y, z));
+        }
+        
+    }
+    
+    if(!previous_pointcloud.empty())
+    {
+        std::cout << "Visual Odometry was Initialized successfully" << std::endl;
+        std::cout << std::endl;
+        first_frame = false;
+
+    }
+
+}
+
+void visual_odometry::ComputeTransformation()
+{
+    cv::Mat transformation, inlier_points;
+
+    std::cout << previous_pointcloud.size() << std::endl;
+    std::cout << current_pointcloud.size() << std::endl;
+
+    cv::estimateAffine3D(previous_pointcloud, current_pointcloud, transformation, inlier_points);
+}
+
+}
