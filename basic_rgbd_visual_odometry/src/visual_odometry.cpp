@@ -51,7 +51,7 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image)
             std::cout << std::endl;
         }
         
-        //ComputeTransformation();
+        ComputeTransformation();
 
         TransitionToNextTimeStep();
 
@@ -87,6 +87,8 @@ void visual_odometry::ComputeMatchedFeatures()
     //cv::Mat featuresShowing;
     //cv::drawKeypoints(current_rgb_frame, current_frame_keypoints, featuresShowing);
 
+    RemoveDepthlessMatches();
+
     cv::Mat img_matches;
     cv::drawMatches(current_rgb_frame, current_frame_keypoints, previous_rgb_frame, previous_frame_keypoints,
                     good_matched_points, img_matches, cv::Scalar::all(-1), cv::Scalar::all(-1),
@@ -97,6 +99,33 @@ void visual_odometry::ComputeMatchedFeatures()
     //cv::imshow("Features",featuresShowing);
     cv::waitKey(10);
 
+}
+
+void visual_odometry::RemoveDepthlessMatches()
+{   
+    std::vector<cv::KeyPoint> previous_points_with_depth;
+    std::vector<cv::KeyPoint> current_points_with_depth;
+    std::vector<cv::DMatch> matches_with_depth;
+
+    for(size_t i = 0; i < matched_points_current.size(); i++)
+    {   
+        cv::Point2f previous_position = matched_points_previous[i].pt;
+        cv::Point2f current_position = matched_points_current[i].pt;
+
+        if(!std::isnan(current_d_frame.at<float>(current_position)) && 
+           !std::isnan(previous_d_frame.at<float>(previous_position)) &&
+            current_d_frame.at<float>(current_position) != 0 && 
+            previous_d_frame.at<float>(previous_position) != 0)
+        {
+           previous_points_with_depth.push_back(matched_points_previous[i]);
+           current_points_with_depth.push_back(matched_points_current[i]); 
+           matches_with_depth.push_back(good_matched_points[i]);
+        }
+    }
+
+    matched_points_previous = previous_points_with_depth;
+    matched_points_current = current_points_with_depth;
+    good_matched_points = matches_with_depth;
 }
 
 void visual_odometry::TransitionToNextTimeStep()
@@ -130,38 +159,14 @@ void visual_odometry::ComputePointCloud(const cv::Mat& depth_image, const std::v
 
             point_cloud.push_back(cv::Point3f(x, y, z));
         }
-    }
-}
-
-void visual_odometry::ComputeCurrentPointCloud()
-{
-    for(size_t i = 0; i < matched_points_current.size(); i++)
-    {   
-        double z = current_d_frame.at<float>(matched_points_current[i].pt);
-        if(z != 0 && !std::isnan(z))
+        else
         {
-            double x = (matched_points_current[i].pt.x - rgbd_camera_intrinsics.cx) * z / rgbd_camera_intrinsics.fx;
-            double y = (matched_points_current[i].pt.y - rgbd_camera_intrinsics.cy) * z / rgbd_camera_intrinsics.fy;
-
-            current_pointcloud.push_back(cv::Point3f(x, y, z));
+            std::cout << "Why is that ?? " << std::endl;
         }
+        
     }
 }
 
-void visual_odometry::ComputePreviousPointCloud()
-{
-    for(size_t i = 0; i < matched_points_previous.size(); i++)
-    {   
-        double z = previous_d_frame.at<float>(matched_points_previous[i].pt);
-        if(z != 0 && !std::isnan(z))
-        {
-            double x = (matched_points_previous[i].pt.x - rgbd_camera_intrinsics.cx) * z / rgbd_camera_intrinsics.fx;
-            double y = (matched_points_previous[i].pt.y - rgbd_camera_intrinsics.cy) * z / rgbd_camera_intrinsics.fy;
-
-            previous_pointcloud.push_back(cv::Point3f(x, y, z));
-        }
-    }
-}
 
 void visual_odometry::SetIntrinsicParams(double cx, double cy, double fx, double fy)
 {
@@ -217,10 +222,7 @@ void visual_odometry::ComputeTransformation()
 {
     cv::Mat transformation, inlier_points;
 
-    std::cout << previous_pointcloud.size() << std::endl;
-    std::cout << current_pointcloud.size() << std::endl;
-
-    cv::estimateAffine3D(previous_pointcloud, current_pointcloud, transformation, inlier_points);
+    //cv::estimateAffine3D(previous_pointcloud, current_pointcloud, transformation, inlier_points);
 }
 
 }

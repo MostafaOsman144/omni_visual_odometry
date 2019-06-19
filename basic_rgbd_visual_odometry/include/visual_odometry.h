@@ -69,6 +69,7 @@ public:
     void SetIntrinsicParams(double cx, double cy, double fx, double fy);
     void InitializeFirstFrame();
     void ComputeTransformation();
+    void RemoveDepthlessMatches();
 
 };
 
