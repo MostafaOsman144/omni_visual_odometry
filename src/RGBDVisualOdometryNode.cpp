@@ -5,13 +5,14 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "rgbd_visual_odometry");
     ros::NodeHandle node_handle;
     
-    omni_visual_odometry::visual_odometry odometryObject;
+    omni_visual_odometry::visual_odometry odometryObject(0.8f);
 
     OdometryNodeRGBD rgbdOdometryNode(node_handle, &odometryObject);
 
     ros::spin();
+
     ros::shutdown();
-    
+  
     return 0;
 }
 
@@ -36,7 +37,7 @@ OdometryNodeRGBD::OdometryNodeRGBD(ros::NodeHandle& node_handle, omni_visual_odo
 /// VisualOdometry Class destructor, not used here, all points are unique_ptrs
 OdometryNodeRGBD::~OdometryNodeRGBD()
 {
-  delete rgbdOdometryObject;
+//  delete rgbdOdometryObject;
 }
 
 /// The images callback function, here the images are received through from the image messages, and through cv_bridge the
@@ -59,19 +60,16 @@ void OdometryNodeRGBD::ImagesCallbackFunction(const sensor_msgs::ImageConstPtr& 
       return;
   }
 
-  cv::Mat cv_rgb_image = cv_ptrRGB->image;
-  cv::Mat cv_depth_image = cv_ptrD->image;
+  cv::Mat cv_rgb_image, cv_depth_image;
 
-  cv::namedWindow("Checking if Working");
-  cv::imshow("Checking if Working",cv_rgb_image);
-  cv::waitKey(10);
+  cv_rgb_image = cv_ptrRGB->image;
+  cv_depth_image = cv_ptrD->image;
+  
+  cv::cvtColor(cv_rgb_image, cv_rgb_image, cv::COLOR_BGR2GRAY);
 
-  GetOrbFeatures(cv_rgb_image, cv_depth_image);
-}
+  //cv::namedWindow("Checking if Working");
+  //cv::imshow("Checking if Working",cv_rgb_image);
+  //cv::waitKey(10);
 
-
-void OdometryNodeRGBD::GetOrbFeatures(cv::Mat& rgb_image, cv::Mat& depth_image)
-{
-  cv::Ptr<cv::ORB> orb_detector = cv::ORB::create();
-
+  rgbdOdometryObject->ComputeOdometry(cv_rgb_image, cv_depth_image);
 }

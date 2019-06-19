@@ -17,13 +17,6 @@
 
 class OdometryNodeRGBD
 {
-    public:
-        OdometryNodeRGBD(ros::NodeHandle& node_handle, omni_visual_odometry::visual_odometry*);
-        ~OdometryNodeRGBD();
-
-        void ImagesCallbackFunction(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
-        void GetOrbFeatures(cv::Mat& rgb_image, cv::Mat& depth_image);
-
     private:
         typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_policy;
         std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>> rgb_sub;
@@ -31,6 +24,12 @@ class OdometryNodeRGBD
         std::unique_ptr<message_filters::Synchronizer<sync_policy>> sync;
 
         omni_visual_odometry::visual_odometry* rgbdOdometryObject;
+
+    public:
+        OdometryNodeRGBD(ros::NodeHandle& node_handle, omni_visual_odometry::visual_odometry*);
+        ~OdometryNodeRGBD();
+
+        void ImagesCallbackFunction(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
 };
 
 
