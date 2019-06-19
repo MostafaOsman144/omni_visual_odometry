@@ -55,6 +55,8 @@ void visual_odometry::ComputeMatchedFeatures()
             //if(matched_points[i][0].distance < threshold*matched_points[i][1].distance)
             //{
                 good_matched_points.push_back(matched_points[i][0]);
+                matched_points_current.push_back(current_frame_keypoints[good_matched_points[i].queryIdx]);
+                matched_points_previous.push_back(previous_frame_keypoints[good_matched_points[i].trainIdx]);
             //}
 
         }

@@ -36,6 +36,8 @@ private:
     
     //Initializing container for filtered matched points (filtering will be done as in lowe's paper through the use of threshold)
     std::vector<cv::DMatch> good_matched_points;
+    std::vector<cv::KeyPoint> matched_points_current;
+    std::vector<cv::KeyPoint> matched_points_previous;
 
     // Lowe's filtering threshold
     const float threshold;
