@@ -18,22 +18,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(OpenCV 3.0 QUIET)
-#if(NOT OpenCV_FOUND)
-#	find_package(OpenCV 2.4.3 QUIET)
-#	if(NOT OpenCV_FOUND)
-#		message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
-#	endif()
-#endif()
 
-#find_package(Eigen3 3.1.0 REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES omni_visual_odometry 
@@ -44,6 +31,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN_INCLUDE_DIR}
   ${PROJECT_SOURCE_DIR}/include/omni_visual_odometry
   ${PROJECT_SOURCE_DIR}/basic_rgbd_visual_odometry
   ${PROJECT_SOURCE_DIR}/basic_rgbd_visual_odometry/include
@@ -64,5 +52,6 @@ target_link_libraries(${PROJECT_NAME}_rgbd
 	${OpenCV_LIBS}
 	#${PROJECT_SOURCE_DIR}/basic_rgbd_visual_odometry/lib/lib${PROJECT_NAME}.so
 	${PROJECT_NAME}
+	${EIGEN3_LIBS}
 )
 
