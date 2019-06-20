@@ -4,6 +4,7 @@
 #include <opencv-3.3.1-dev/opencv2/opencv.hpp>
 #include <vector>
 #include <iostream>
+#include <eigen3/Eigen/Dense>
 
 namespace omni_visual_odometry
 {
@@ -70,6 +71,11 @@ public:
     void InitializeFirstFrame();
     void ComputeTransformation();
     void RemoveDepthlessMatches();
+
+    void TakeRandom3DPairs(Eigen::MatrixXd& points_current, 
+                                        Eigen::MatrixXd& points_previous,
+                                        const std::vector<cv::Point3f>& current_pointcloud, 
+                                        const std::vector<cv::Point3f>& previous_pointcloud);
 
 };
 
