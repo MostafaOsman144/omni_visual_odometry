@@ -227,6 +227,7 @@ void visual_odometry::ComputeTransformation()
     Eigen::MatrixXd points_current = Eigen::MatrixXd::Zero(4, 4);
     Eigen::MatrixXd points_previous = Eigen::MatrixXd::Zero(4, 4);
 
+    //TODO: RANSAC to be added to remove outliers, for more robust estimation fo the transformation.
     TakeRandom3DPairs(points_current, points_previous, current_pointcloud, previous_pointcloud);
 
     // Solving the equation Ax = b to get the rigid body transformation
@@ -295,7 +296,7 @@ void visual_odometry::ComputeTransformation()
         std::cout << transformation << std::endl;
         std::cout << std::endl;
 
-        std::cout << transformation.determinant() << std::endl;
+        std::cout << transformation.block(0, 0, 3, 3).determinant() << std::endl;
         std::cout << std::endl;
     }
     else
