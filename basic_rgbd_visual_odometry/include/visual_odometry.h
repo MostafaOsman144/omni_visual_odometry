@@ -69,13 +69,7 @@ public:
     void ComputeCurrentPointCloud();
     void SetIntrinsicParams(double cx, double cy, double fx, double fy);
     void InitializeFirstFrame();
-    void ComputeTransformation();
     void RemoveDepthlessMatches();
-
-    void TakeRandom3DPairs(Eigen::MatrixXd& points_current, 
-                                        Eigen::MatrixXd& points_previous,
-                                        const std::vector<cv::Point3f>& current_pointcloud, 
-                                        const std::vector<cv::Point3f>& previous_pointcloud);
 
 };
 

@@ -50,8 +50,6 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image)
             std::cout << "No Matching points are there to compute the 3D positions" << std::endl;
             std::cout << std::endl;
         }
-        
-        ComputeTransformation();
 
         TransitionToNextTimeStep();
 
@@ -68,12 +66,9 @@ void visual_odometry::ComputeMatchedFeatures()
     {
         for(size_t i = 0; i < matched_points.size(); i++)
         {
-            //if(matched_points[i][0].distance < threshold*matched_points[i][1].distance)
-            //{
                 good_matched_points.push_back(matched_points[i][0]);
                 matched_points_current.push_back(current_frame_keypoints[good_matched_points[i].queryIdx]);
                 matched_points_previous.push_back(previous_frame_keypoints[good_matched_points[i].trainIdx]);
-            //}
 
         }
     }
@@ -84,9 +79,6 @@ void visual_odometry::ComputeMatchedFeatures()
         std::cout << std::endl;
     }
 
-    //cv::Mat featuresShowing;
-    //cv::drawKeypoints(current_rgb_frame, current_frame_keypoints, featuresShowing);
-
     RemoveDepthlessMatches();
 
     cv::Mat img_matches;
@@ -96,7 +88,6 @@ void visual_odometry::ComputeMatchedFeatures()
 
     cv::imshow("Good Matches", img_matches);
 
-    //cv::imshow("Features",featuresShowing);
     cv::waitKey(10);
 
 }
@@ -219,116 +210,6 @@ void visual_odometry::InitializeFirstFrame()
 
     }
 
-}
-
-void visual_odometry::ComputeTransformation()
-{   
-    // select four point pairs from the pointclouds
-    Eigen::MatrixXd points_current = Eigen::MatrixXd::Zero(4, 4);
-    Eigen::MatrixXd points_previous = Eigen::MatrixXd::Zero(4, 4);
-
-    //TODO: RANSAC to be added to remove outliers, for more robust estimation fo the transformation.
-    TakeRandom3DPairs(points_current, points_previous, current_pointcloud, previous_pointcloud);
-
-    // Solving the equation Ax = b to get the rigid body transformation
-    Eigen::MatrixXd constraints_matrix = Eigen::MatrixXd::Zero(12, 12); // A
-    
-
-    // TODO: Replace this hard code with a for-loop 
-    //Filling the constraint matrix
-    constraints_matrix.block(0, 0, 1, 4) = points_previous.row(0);
-    constraints_matrix.block(1, 4, 1, 4) = points_previous.row(0);
-    constraints_matrix.block(2, 8, 1, 4) = points_previous.row(0);
-    
-    constraints_matrix.block(3, 0, 1, 4) = points_previous.row(1);
-    constraints_matrix.block(4, 4, 1, 4) = points_previous.row(1);
-    constraints_matrix.block(5, 8, 1, 4) = points_previous.row(1);
-
-    constraints_matrix.block(6, 0, 1, 4) = points_previous.row(2);
-    constraints_matrix.block(7, 4, 1, 4) = points_previous.row(2);
-    constraints_matrix.block(8, 8, 1, 4) = points_previous.row(2);
-
-    constraints_matrix.block(9, 0, 1, 4) = points_previous.row(3);
-    constraints_matrix.block(10, 4, 1, 4) = points_previous.row(3);
-    constraints_matrix.block(11, 8, 1, 4) = points_previous.row(3);
-
-    // TODO: Replace this hard code with a for-loop
-    //Filling the current vector
-    Eigen::VectorXd vector_after_transformation = Eigen::VectorXd::Zero(12, 1);
-    vector_after_transformation.segment(0, 3) = points_current.block(0, 0, 3, 1);
-    vector_after_transformation.segment(3, 3) = points_current.block(0, 1, 3, 1);
-    vector_after_transformation.segment(6, 3) = points_current.block(0, 2, 3, 1);
-    vector_after_transformation.segment(9, 3) = points_current.block(0, 3, 3, 1);
-
-    // Solution of the linear problem
-    // Initializing the containers
-    Eigen::MatrixXd transformation = Eigen::MatrixXd::Zero(4, 4);
-    Eigen::VectorXd transformation_as_vector = Eigen::VectorXd::Zero(12, 1);
-
-    // Check whether the constraint matrix is singular or not, to avoid an exception.
-    // Constraint matrix is only singular if two of the points are collinear
-    if(constraints_matrix.determinant() >= 1e-5)
-    {
-        Eigen::MatrixXd inverse_of_constraints = constraints_matrix.inverse();
-        transformation_as_vector = inverse_of_constraints * vector_after_transformation;
-        
-        // TODO: Make this a for-loop or a function, first search for a reshape function in Eigen.
-        transformation(0,0) = transformation_as_vector(0);
-        transformation(0,1) = transformation_as_vector(1);
-        transformation(0,2) = transformation_as_vector(2);
-        transformation(0,3) = transformation_as_vector(3);
-        
-        transformation(1,0) = transformation_as_vector(4);
-        transformation(1,1) = transformation_as_vector(5);
-        transformation(1,2) = transformation_as_vector(6);
-        transformation(1,3) = transformation_as_vector(7);
-        
-        transformation(2,0) = transformation_as_vector(8);
-        transformation(2,1) = transformation_as_vector(9);
-        transformation(2,2) = transformation_as_vector(10);
-        transformation(2,3) = transformation_as_vector(11);
-        
-        transformation(3,0) = 0;
-        transformation(3,1) = 0;
-        transformation(3,2) = 0;
-        transformation(3,3) = 1;
-        
-        std::cout << transformation << std::endl;
-        std::cout << std::endl;
-
-        std::cout << transformation.block(0, 0, 3, 3).determinant() << std::endl;
-        std::cout << std::endl;
-    }
-    else
-    {   
-        // TODO: This should not be an exception, just resampling is needed to get non-collinear points.
-        std::cout << "The matrix is singular" << std::endl;
-    }
-    
-}
-
-
-// TODO: Fix this to be generic, now it will break with any dimension other than 4
-void visual_odometry::TakeRandom3DPairs(Eigen::MatrixXd& points_current, 
-                                        Eigen::MatrixXd& points_previous,
-                                        const std::vector<cv::Point3f>& current_pointcloud, 
-                                        const std::vector<cv::Point3f>& previous_pointcloud)
-{
-    for(size_t i = 0; i < points_current.cols(); i++)
-    {
-        int random_number = std::rand() % (current_pointcloud.size() + 1) ;
-
-        points_current(0, i) = current_pointcloud[random_number].x;
-        points_current(1, i) = current_pointcloud[random_number].y;
-        points_current(2, i) = current_pointcloud[random_number].z;
-        points_current(3, i) = 1; // Homogeneous representation factor
-
-        points_previous(i, 0) = previous_pointcloud[random_number].x;
-        points_previous(i, 1) = previous_pointcloud[random_number].y;
-        points_previous(i, 2) = previous_pointcloud[random_number].z;
-        points_previous(i, 3) = 1; // Homogeneous representation factor
-        
-    }
 }
 
 }
