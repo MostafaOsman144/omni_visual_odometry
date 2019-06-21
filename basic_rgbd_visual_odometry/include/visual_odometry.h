@@ -6,6 +6,8 @@
 #include <iostream>
 #include <eigen3/Eigen/Dense>
 
+#include"visual_odometry_helpers.h"
+
 namespace omni_visual_odometry
 {
 
@@ -61,6 +63,9 @@ private:
     Eigen::MatrixXd incremental_transform;
     Eigen::MatrixXd camera_transform = Eigen::MatrixXd::Identity(4, 4);
 
+    // initialize a visual_odometry_helper object
+    visual_odometry_helpers helper_class;
+
 public:
     visual_odometry(int);
     ~visual_odometry();
@@ -83,20 +88,6 @@ public:
 
     // First frame initialization, before the visual odometry process starts
     void InitializeFirstFrame();
-    void RemoveDepthlessMatches();
-
-    // Checks whether the determinant of a matrix is of a given value
-    bool CheckDeterminantValue(Eigen::MatrixXd input_matrix, double target_value, double epsilon);
-
-    // Select random 3D points from both current and previous pointclouds and return them in points_current 
-    //and points_previous
-    void TakeRandom3DPairs(Eigen::MatrixXd& points_current, 
-                                        Eigen::MatrixXd& points_previous,
-                                        const std::vector<cv::Point3f>& current_pointcloud, 
-                                        const std::vector<cv::Point3f>& previous_pointcloud);
-
-    // This function checks whether or not a given matrix is an element of the SO(3) group
-    bool CheckIfSO3(Eigen::MatrixXd matrix, double epsilon);
 };
 
 }

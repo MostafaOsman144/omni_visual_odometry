@@ -41,6 +41,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/basic_rgbd_visual_odome
 
 add_library(${PROJECT_NAME} SHARED
 basic_rgbd_visual_odometry/src/visual_odometry.cpp
+basic_rgbd_visual_odometry/src/visual_odometry_helpers.cpp
 )
 
 add_executable(${PROJECT_NAME}_rgbd src/RGBDVisualOdometryNode.cpp)
