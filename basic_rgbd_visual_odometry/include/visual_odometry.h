@@ -58,24 +58,50 @@ private:
     
     CameraIntrinsics rgbd_camera_intrinsics;
 
+    Eigen::MatrixXd incremental_transform;
+    Eigen::MatrixXd camera_transform;
+
 public:
     visual_odometry(int);
     ~visual_odometry();
+
+    // Class Functionality starts at this function
     void ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image);
+    
+    // Computes the Matches between the current and previous frames, only keeps those which have depth values
     void ComputeMatchedFeatures();
+
+    // Make current frame previous frame, remove all the data from this frame
     void TransitionToNextTimeStep();
+    void TransitionToNextTimeStepKeepFrame();
+
+    // COmputes the 3D position of the matched points in the current and previous frames
     void ComputePointCloud(const cv::Mat&, const std::vector<cv::KeyPoint>&, std::vector<cv::Point3f>&);
-    void ComputePreviousPointCloud();
-    void ComputeCurrentPointCloud();
+
+    // Sets the intrinsic parameters for the camera which is being used
     void SetIntrinsicParams(double cx, double cy, double fx, double fy);
+
+    // First frame initialization, before the visual odometry process starts
     void InitializeFirstFrame();
-    void ComputeTransformation();
+
+    // Computes the 3D transformation of the camera from 4 3D points in space, both taken by the current and previous camera 
+    // positions
+    bool ComputeTransformation();
+
+    // Filters out the Matches which does not have valid depth values
     void RemoveDepthlessMatches();
 
+    // Checks whether the determinant of a matrix is of a given value
+    bool CheckDeterminantValue(Eigen::MatrixXd input_matrix, double target_value, double epsilon);
+
+    // Select random 3D points from both current and previous pointclouds and return them in points_current 
+    //and points_previous
     void TakeRandom3DPairs(Eigen::MatrixXd& points_current, 
                                         Eigen::MatrixXd& points_previous,
                                         const std::vector<cv::Point3f>& current_pointcloud, 
                                         const std::vector<cv::Point3f>& previous_pointcloud);
+
+    bool CheckIfSO3(Eigen::MatrixXd matrix, double epsilon);
 
 };
 

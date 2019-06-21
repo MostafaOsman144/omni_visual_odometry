@@ -51,9 +51,18 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image)
             std::cout << std::endl;
         }
         
-        ComputeTransformation();
+        bool success = ComputeTransformation();
 
-        TransitionToNextTimeStep();
+        if(success)
+        {
+            TransitionToNextTimeStep();
+        }
+        else
+        {
+            TransitionToNextTimeStepKeepFrame();
+        }
+        
+        
 
     }
 
@@ -146,6 +155,19 @@ void visual_odometry::TransitionToNextTimeStep()
 
 }
 
+void visual_odometry::TransitionToNextTimeStepKeepFrame()
+{   
+    matched_points.clear();
+    good_matched_points.clear();
+
+    matched_points_current.clear();
+    matched_points_previous.clear();
+
+    current_pointcloud.clear();
+    previous_pointcloud.clear();
+
+}
+
 void visual_odometry::ComputePointCloud(const cv::Mat& depth_image, const std::vector<cv::KeyPoint>& matched_keypoints,
                                         std::vector<cv::Point3f>& point_cloud)
 {
@@ -221,89 +243,129 @@ void visual_odometry::InitializeFirstFrame()
 
 }
 
-void visual_odometry::ComputeTransformation()
+bool visual_odometry::ComputeTransformation()
 {   
     // select four point pairs from the pointclouds
     Eigen::MatrixXd points_current = Eigen::MatrixXd::Zero(4, 4);
     Eigen::MatrixXd points_previous = Eigen::MatrixXd::Zero(4, 4);
 
-    //TODO: RANSAC to be added to remove outliers, for more robust estimation fo the transformation.
-    TakeRandom3DPairs(points_current, points_previous, current_pointcloud, previous_pointcloud);
-
     // Solving the equation Ax = b to get the rigid body transformation
     Eigen::MatrixXd constraints_matrix = Eigen::MatrixXd::Zero(12, 12); // A
-    
-
-    // TODO: Replace this hard code with a for-loop 
-    //Filling the constraint matrix
-    constraints_matrix.block(0, 0, 1, 4) = points_previous.row(0);
-    constraints_matrix.block(1, 4, 1, 4) = points_previous.row(0);
-    constraints_matrix.block(2, 8, 1, 4) = points_previous.row(0);
-    
-    constraints_matrix.block(3, 0, 1, 4) = points_previous.row(1);
-    constraints_matrix.block(4, 4, 1, 4) = points_previous.row(1);
-    constraints_matrix.block(5, 8, 1, 4) = points_previous.row(1);
-
-    constraints_matrix.block(6, 0, 1, 4) = points_previous.row(2);
-    constraints_matrix.block(7, 4, 1, 4) = points_previous.row(2);
-    constraints_matrix.block(8, 8, 1, 4) = points_previous.row(2);
-
-    constraints_matrix.block(9, 0, 1, 4) = points_previous.row(3);
-    constraints_matrix.block(10, 4, 1, 4) = points_previous.row(3);
-    constraints_matrix.block(11, 8, 1, 4) = points_previous.row(3);
-
-    // TODO: Replace this hard code with a for-loop
-    //Filling the current vector
-    Eigen::VectorXd vector_after_transformation = Eigen::VectorXd::Zero(12, 1);
-    vector_after_transformation.segment(0, 3) = points_current.block(0, 0, 3, 1);
-    vector_after_transformation.segment(3, 3) = points_current.block(0, 1, 3, 1);
-    vector_after_transformation.segment(6, 3) = points_current.block(0, 2, 3, 1);
-    vector_after_transformation.segment(9, 3) = points_current.block(0, 3, 3, 1);
 
     // Solution of the linear problem
     // Initializing the containers
     Eigen::MatrixXd transformation = Eigen::MatrixXd::Zero(4, 4);
     Eigen::VectorXd transformation_as_vector = Eigen::VectorXd::Zero(12, 1);
 
-    // Check whether the constraint matrix is singular or not, to avoid an exception.
-    // Constraint matrix is only singular if two of the points are collinear
-    if(constraints_matrix.determinant() >= 1e-5)
-    {
-        Eigen::MatrixXd inverse_of_constraints = constraints_matrix.inverse();
-        transformation_as_vector = inverse_of_constraints * vector_after_transformation;
-        
-        // TODO: Make this a for-loop or a function, first search for a reshape function in Eigen.
-        transformation(0,0) = transformation_as_vector(0);
-        transformation(0,1) = transformation_as_vector(1);
-        transformation(0,2) = transformation_as_vector(2);
-        transformation(0,3) = transformation_as_vector(3);
-        
-        transformation(1,0) = transformation_as_vector(4);
-        transformation(1,1) = transformation_as_vector(5);
-        transformation(1,2) = transformation_as_vector(6);
-        transformation(1,3) = transformation_as_vector(7);
-        
-        transformation(2,0) = transformation_as_vector(8);
-        transformation(2,1) = transformation_as_vector(9);
-        transformation(2,2) = transformation_as_vector(10);
-        transformation(2,3) = transformation_as_vector(11);
-        
-        transformation(3,0) = 0;
-        transformation(3,1) = 0;
-        transformation(3,2) = 0;
-        transformation(3,3) = 1;
-        
-        std::cout << transformation << std::endl;
-        std::cout << std::endl;
+    int number_of_iterations = 1000;
 
-        std::cout << transformation.block(0, 0, 3, 3).determinant() << std::endl;
-        std::cout << std::endl;
+    for(int i = 0 ; i < number_of_iterations; i++)
+    {
+        //TODO: RANSAC to be added to remove outliers, for more robust estimation fo the transformation.
+        TakeRandom3DPairs(points_current, points_previous, current_pointcloud, previous_pointcloud);
+
+        // TODO: Replace this hard code with a for-loop 
+        //Filling the constraint matrix
+        constraints_matrix.block(0, 0, 1, 4) = points_previous.row(0);
+        constraints_matrix.block(1, 4, 1, 4) = points_previous.row(0);
+        constraints_matrix.block(2, 8, 1, 4) = points_previous.row(0);
+        
+        constraints_matrix.block(3, 0, 1, 4) = points_previous.row(1);
+        constraints_matrix.block(4, 4, 1, 4) = points_previous.row(1);
+        constraints_matrix.block(5, 8, 1, 4) = points_previous.row(1);
+
+        constraints_matrix.block(6, 0, 1, 4) = points_previous.row(2);
+        constraints_matrix.block(7, 4, 1, 4) = points_previous.row(2);
+        constraints_matrix.block(8, 8, 1, 4) = points_previous.row(2);
+
+        constraints_matrix.block(9, 0, 1, 4) = points_previous.row(3);
+        constraints_matrix.block(10, 4, 1, 4) = points_previous.row(3);
+        constraints_matrix.block(11, 8, 1, 4) = points_previous.row(3);
+
+        // TODO: Replace this hard code with a for-loop
+        //Filling the current vector
+        Eigen::VectorXd vector_after_transformation = Eigen::VectorXd::Zero(12, 1);
+        vector_after_transformation.segment(0, 3) = points_current.block(0, 0, 3, 1);
+        vector_after_transformation.segment(3, 3) = points_current.block(0, 1, 3, 1);
+        vector_after_transformation.segment(6, 3) = points_current.block(0, 2, 3, 1);
+        vector_after_transformation.segment(9, 3) = points_current.block(0, 3, 3, 1);
+
+        // Check whether the constraint matrix is singular or not, to avoid an exception.
+        // Constraint matrix is only singular if two of the points are collinear
+        if(!CheckDeterminantValue(constraints_matrix, 0, 1e-2))
+        {
+            Eigen::MatrixXd inverse_of_constraints = constraints_matrix.inverse();
+            transformation_as_vector = inverse_of_constraints * vector_after_transformation;
+            
+            // TODO: Make this a for-loop or a function, first search for a reshape function in Eigen.
+            transformation(0,0) = transformation_as_vector(0);
+            transformation(0,1) = transformation_as_vector(1);
+            transformation(0,2) = transformation_as_vector(2);
+            transformation(0,3) = transformation_as_vector(3);
+            
+            transformation(1,0) = transformation_as_vector(4);
+            transformation(1,1) = transformation_as_vector(5);
+            transformation(1,2) = transformation_as_vector(6);
+            transformation(1,3) = transformation_as_vector(7);
+            
+            transformation(2,0) = transformation_as_vector(8);
+            transformation(2,1) = transformation_as_vector(9);
+            transformation(2,2) = transformation_as_vector(10);
+            transformation(2,3) = transformation_as_vector(11);
+            
+            transformation(3,0) = 0;
+            transformation(3,1) = 0;
+            transformation(3,2) = 0;
+            transformation(3,3) = 1;
+
+            if(CheckDeterminantValue(transformation, 1, 1e-2))
+            {
+                incremental_transform = transformation;
+                return true;
+            }
+        }
+
     }
-    else
-    {   
-        // TODO: This should not be an exception, just resampling is needed to get non-collinear points.
-        std::cout << "The matrix is singular" << std::endl;
+    return false;   
+}
+
+bool visual_odometry::CheckDeterminantValue(Eigen::MatrixXd input_matrix, double target_value, double epsilon)
+{
+    double determinant = input_matrix.determinant();
+    double delta = determinant - target_value;
+    if(fabs(delta) <= fabs(epsilon) && !std::isnan(determinant))
+    {
+        return true;
     }
+
+    return false;
+}
+
+bool visual_odometry::CheckIfSO3(Eigen::MatrixXd matrix, double epsilon)
+{
+    if(matrix.rows() != 3 || matrix.cols() != 3)
+    {
+        return false;
+    }
+    
+    if(!CheckDeterminantValue(matrix, 1, 1e-2))
+    {
+        return false;
+    }
+
+    Eigen::MatrixXd result = matrix * matrix.transpose() - Eigen::MatrixXd::Identity(3, 3);
+    for(int i = 0; i < 3; i++)
+    {
+        for(int j = 0; j < 3; j++)
+        {
+            if(fabs(result(i, j)) >= fabs(epsilon))
+            {
+                return false;
+            }    
+        }
+    }
+
+    return true;
     
 }
 
