@@ -59,7 +59,7 @@ private:
     CameraIntrinsics rgbd_camera_intrinsics;
 
     Eigen::MatrixXd incremental_transform;
-    Eigen::MatrixXd camera_transform;
+    Eigen::MatrixXd camera_transform = Eigen::MatrixXd::Identity(4, 4);
 
 public:
     visual_odometry(int);
@@ -101,6 +101,7 @@ public:
                                         const std::vector<cv::Point3f>& current_pointcloud, 
                                         const std::vector<cv::Point3f>& previous_pointcloud);
 
+    // This function checks whether or not a given matrix is an element of the SO(3) group
     bool CheckIfSO3(Eigen::MatrixXd matrix, double epsilon);
 
 };

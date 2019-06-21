@@ -39,6 +39,7 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image)
         // Step 1 -> Compute the feature matches between the two successive frames
         ComputeMatchedFeatures();
 
+        
         // Step 2 -> Compute the 3D location of the matched points
         if(!matched_points_previous.empty() && !matched_points_current.empty())
         {
@@ -55,15 +56,17 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image)
 
         if(success)
         {
-            TransitionToNextTimeStep();
+            camera_transform = camera_transform * incremental_transform.inverse();
+            std::cout << camera_transform << std::endl << std::endl;
         }
         else
         {
-            TransitionToNextTimeStepKeepFrame();
+            std::cout << "Failed" << std::endl;
+            std::cout << std::endl;
         }
         
+        TransitionToNextTimeStep();
         
-
     }
 
 }
@@ -93,9 +96,6 @@ void visual_odometry::ComputeMatchedFeatures()
         std::cout << std::endl;
     }
 
-    //cv::Mat featuresShowing;
-    //cv::drawKeypoints(current_rgb_frame, current_frame_keypoints, featuresShowing);
-
     RemoveDepthlessMatches();
 
     cv::Mat img_matches;
@@ -104,8 +104,6 @@ void visual_odometry::ComputeMatchedFeatures()
                     std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
     cv::imshow("Good Matches", img_matches);
-
-    //cv::imshow("Features",featuresShowing);
     cv::waitKey(10);
 
 }
@@ -318,8 +316,9 @@ bool visual_odometry::ComputeTransformation()
             transformation(3,2) = 0;
             transformation(3,3) = 1;
 
-            if(CheckDeterminantValue(transformation, 1, 1e-2))
+            if(CheckIfSO3(transformation.block(0, 0, 3, 3), 1e-1))
             {
+                //std::cout << "transformation is SO(3)" << std::endl;
                 incremental_transform = transformation;
                 return true;
             }
@@ -348,17 +347,17 @@ bool visual_odometry::CheckIfSO3(Eigen::MatrixXd matrix, double epsilon)
         return false;
     }
     
-    if(!CheckDeterminantValue(matrix, 1, 1e-2))
+    if(!CheckDeterminantValue(matrix, 1, epsilon))
     {
         return false;
     }
 
-    Eigen::MatrixXd result = matrix * matrix.transpose() - Eigen::MatrixXd::Identity(3, 3);
+    Eigen::MatrixXd diffference = matrix * matrix.transpose() - Eigen::MatrixXd::Identity(3, 3);
     for(int i = 0; i < 3; i++)
     {
         for(int j = 0; j < 3; j++)
         {
-            if(fabs(result(i, j)) >= fabs(epsilon))
+            if(fabs(diffference(i, j)) >= fabs(epsilon))
             {
                 return false;
             }    
@@ -366,7 +365,6 @@ bool visual_odometry::CheckIfSO3(Eigen::MatrixXd matrix, double epsilon)
     }
 
     return true;
-    
 }
 
 
