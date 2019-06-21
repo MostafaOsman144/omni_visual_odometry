@@ -85,10 +85,6 @@ public:
     void InitializeFirstFrame();
     void RemoveDepthlessMatches();
 
-    // Computes the 3D transformation of the camera from 4 3D points in space, both taken by the current and previous camera 
-    // positions
-    bool ComputeTransformation();
-
     // Checks whether the determinant of a matrix is of a given value
     bool CheckDeterminantValue(Eigen::MatrixXd input_matrix, double target_value, double epsilon);
 
