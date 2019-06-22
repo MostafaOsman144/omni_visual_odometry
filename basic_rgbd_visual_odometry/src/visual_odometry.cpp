@@ -39,18 +39,31 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image)
         // Step 1 -> Compute the feature matches between the two successive frames
         ComputeMatchedFeatures();
 
-        
         // Step 2 -> Compute the 3D location of the matched points
-        if(!matched_points_previous.empty() && !matched_points_current.empty())
-        {
+        if(!(matched_points_previous.size() <= 4) && !(matched_points_current.size() <= 4))
+        {   
+            std::vector<cv::Point2f> matched_current;
+            for(int i = 0; i < matched_points_current.size(); i++)
+            {
+                matched_current.push_back(matched_points_current[i].pt);
+            }
+
             ComputePointCloud(previous_d_frame, matched_points_previous, previous_pointcloud);
-            ComputePointCloud(current_d_frame, matched_points_current, current_pointcloud);
+            
+            std::cout << previous_pointcloud.size() << std::endl;
+            std::cout << matched_current.size() << std::endl << std::endl;
+            if(previous_pointcloud.size() == matched_current.size())
+            {
+                cv::solvePnPRansac(previous_pointcloud, matched_current, camera_matrix, cv::noArray(), 
+                               incremental_rot, incremental_trans, false, 50, 0.1, 0.99,cv::noArray(), CV_P3P);
+            }
         }
         else
         {
             std::cout << "No Matching points are there to compute the 3D positions" << std::endl;
             std::cout << std::endl;
         }
+
         
         TransitionToNextTimeStep();
         
@@ -92,6 +105,8 @@ void visual_odometry::ComputeMatchedFeatures()
                     std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
     cv::imshow("Good Matches", img_matches);
+    cv::waitKey(10);
+    cv::imshow("Depth Map", current_d_frame);
     cv::waitKey(10);
 
 }
@@ -164,7 +179,12 @@ void visual_odometry::SetIntrinsicParams(double cx, double cy, double fx, double
     std::cout << "cy = " << rgbd_camera_intrinsics.cy << std::endl;
     std::cout << "fx = " << rgbd_camera_intrinsics.fx << std::endl;
     std::cout << "fy = " << rgbd_camera_intrinsics.fy << std::endl;
-    std::cout << std::endl;
+    std::cout << std::endl; 
+
+    camera_matrix.at<float>(0,0) = rgbd_camera_intrinsics.fx;
+    camera_matrix.at<float>(1,1) = rgbd_camera_intrinsics.fy;
+    camera_matrix.at<float>(0,2) = rgbd_camera_intrinsics.cx;
+    camera_matrix.at<float>(1,2) = rgbd_camera_intrinsics.cy;
 
 }
 
@@ -201,4 +221,5 @@ void visual_odometry::InitializeFirstFrame()
     }
 
 }
+
 }

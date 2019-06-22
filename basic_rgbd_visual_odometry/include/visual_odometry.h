@@ -60,11 +60,14 @@ private:
     
     CameraIntrinsics rgbd_camera_intrinsics;
 
-    Eigen::MatrixXd incremental_transform;
-    Eigen::MatrixXd camera_transform = Eigen::MatrixXd::Identity(4, 4);
-
     // initialize a visual_odometry_helper object
     visual_odometry_helpers helper_class;
+
+    cv::Mat camera_matrix = cv::Mat::zeros(3, 3, CV_32F);
+
+    cv::Mat incremental_rot;
+    cv::Mat incremental_trans;
+    cv::Mat camera_transform;
 
 public:
     visual_odometry(int);
