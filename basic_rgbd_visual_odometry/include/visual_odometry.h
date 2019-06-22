@@ -67,7 +67,10 @@ private:
 
     cv::Mat incremental_rot;
     cv::Mat incremental_trans;
-    cv::Mat camera_transform;
+
+
+    Eigen::MatrixXd camera_transform;
+    Eigen::MatrixXd incremental_transform;
 
 public:
     visual_odometry(int);

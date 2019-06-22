@@ -56,7 +56,21 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image)
             {
                 cv::solvePnPRansac(previous_pointcloud, matched_current, camera_matrix, cv::noArray(), 
                                incremental_rot, incremental_trans, false, 50, 0.1, 0.99,cv::noArray(), CV_P3P);
+
+            cv::Mat rotation_matrix = cv::Mat::zeros(3,3, CV_32F);
+            cv::Rodrigues(incremental_rot, rotation_matrix);
+
+            cv::Mat increment_cv = cv::Mat::zeros(4, 4, CV_32F);
+            //std::cout << rotation_matrix << std::endl << std::endl;
+            helper_class.buildTransformationMatFromRotAndTrans(rotation_matrix, incremental_trans, increment_cv);
+            
+            //std::cout << increment_cv << std::endl << std::endl;
+            //incremental_transform = helper_class.Convert4x4FromMatToEigen(increment_cv);
+
+            //std::cout << incremental_transform << std::endl << std::endl;
+
             }
+
         }
         else
         {
@@ -64,9 +78,7 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image)
             std::cout << std::endl;
         }
 
-        
         TransitionToNextTimeStep();
-        
     }
 
 }

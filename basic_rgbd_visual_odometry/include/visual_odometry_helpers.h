@@ -32,6 +32,10 @@ public:
 
     // This function checks whether or not a given matrix is an element of the SO(3) group
     bool CheckIfSO3(Eigen::MatrixXd matrix, double epsilon);
+
+    Eigen::MatrixXd Convert4x4FromMatToEigen(cv::Mat& input);
+
+    void buildTransformationMatFromRotAndTrans(const cv::Mat& rot, const cv::Mat& trans, cv::Mat& output);
 };
 
 }

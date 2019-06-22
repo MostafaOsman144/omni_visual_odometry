@@ -105,4 +105,44 @@ void visual_odometry_helpers::RemoveDepthlessMatches(std::vector<cv::DMatch>& go
     good_matched_points = matches_with_depth;
 }
 
+
+Eigen::MatrixXd visual_odometry_helpers::Convert4x4FromMatToEigen(cv::Mat& input)
+{
+    Eigen::MatrixXd output = Eigen::MatrixXd::Zero(4, 4);
+    for(int i = 0; i < 4; i++)
+    {
+        for(int j = 0; j < 4; j++)
+        {
+            output(i, j) = input.at<float>(i, j);
+        }
+    }
+
+    return output;
+}
+
+void visual_odometry_helpers::buildTransformationMatFromRotAndTrans(const cv::Mat& rot, const cv::Mat& trans, cv::Mat& output)
+{   
+
+   // std::cout << rot << std::endl;
+    //std::cout << std::endl;
+
+    for(int i = 0; i < 3; i++)
+    {
+        for(int j = 0; j < 3; j++)
+        {
+            std::cout << rot << std::endl << std::endl;
+            output.row(i).col(j) = rot.at<float>(i, j);
+            std::cout << output.row(i).col(j) << " = " << rot.at<float>(i, j) << std::endl << std::endl;
+        }
+    }
+
+    //std::cout << output << std::endl << std::endl;
+
+    output.at<float>(0, 3) = trans.at<float>(0, 3);
+    output.at<float>(1, 3) = trans.at<float>(1, 3);
+    output.at<float>(2, 3) = trans.at<float>(2, 3);
+    output.at<float>(3, 3) = 1;
+}
+
+
 }
