@@ -73,10 +73,6 @@ void OdometryNodeRGBD::ImagesCallbackFunction(const sensor_msgs::ImageConstPtr& 
 
   cv::cvtColor(cv_rgb_image, cv_rgb_image, cv::COLOR_BGR2GRAY);
 
-  //cv::namedWindow("Checking if Working");
-  //cv::imshow("Checking if Working",cv_rgb_image);
-  //cv::waitKey(10);
-
   rgbdOdometryObject->ComputeOdometry(cv_rgb_image, cv_depth_image);
 
 }
