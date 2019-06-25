@@ -69,7 +69,7 @@ private:
     cv::Mat incremental_trans;
 
 
-    Eigen::MatrixXd camera_transform;
+    Eigen::MatrixXd camera_transform = Eigen::MatrixXd::Identity(4,4);
     Eigen::MatrixXd incremental_transform;
 
 public:
@@ -77,7 +77,7 @@ public:
     ~visual_odometry();
 
     // Class Functionality starts at this function
-    void ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image);
+    void ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image, Eigen::MatrixXd& camera_transform_out);
     
     // Computes the Matches between the current and previous frames, only keeps those which have depth values
     void ComputeMatchedFeatures();

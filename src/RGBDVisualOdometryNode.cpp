@@ -38,6 +38,8 @@ OdometryNodeRGBD::OdometryNodeRGBD(ros::NodeHandle& node_handle, ros::NodeHandle
   
   sync->registerCallback(boost::bind(&OdometryNodeRGBD::ImagesCallbackFunction, this, _1, _2));
 
+  odometry_publisher = node_handle.advertise<nav_msgs::Odometry>("visual_odometry", 1);
+
 }
 
 /// VisualOdometry Class destructor, not used here, all points are unique_ptrs
@@ -73,7 +75,11 @@ void OdometryNodeRGBD::ImagesCallbackFunction(const sensor_msgs::ImageConstPtr& 
 
   cv::cvtColor(cv_rgb_image, cv_rgb_image, cv::COLOR_BGR2GRAY);
 
-  rgbdOdometryObject->ComputeOdometry(cv_rgb_image, cv_depth_image);
+  Eigen::MatrixXd output_transform = Eigen::MatrixXd::Zero(4,4);
+  rgbdOdometryObject->ComputeOdometry(cv_rgb_image, cv_depth_image, output_transform);
+
+  PublishOdometry(output_transform);
+  //std::cout << output_transform << std::endl << std::endl;
 
 }
 
@@ -96,5 +102,32 @@ void OdometryNodeRGBD::ReadIntrinicsFromParamterFile()
      }
 
   rgbdOdometryObject->SetIntrinsicParams(cx, cy, fx, fy);
+
+}
+
+void OdometryNodeRGBD::PublishOdometry(Eigen::MatrixXd& transform)
+{
+  nav_msgs::Odometry odometry_message;
+  tf::Matrix3x3 rotation_part(transform(0, 0), transform(0, 1), transform(0, 2),
+                              transform(1, 0), transform(1, 1), transform(1, 2),
+                              transform(2, 0), transform(2, 1), transform(2, 2));
+
+  tf::Quaternion quat;
+  rotation_part.getRotation(quat);
+
+  odometry_message.header.stamp = ros::Time::now();
+  odometry_message.header.frame_id = "odom_frame";
+  odometry_message.child_frame_id = "camera_frame";
+
+  odometry_message.pose.pose.position.x = transform(0,3);
+  odometry_message.pose.pose.position.y = transform(1,3);
+  odometry_message.pose.pose.position.z = 0;
+
+  odometry_message.pose.pose.orientation.x = quat.x();
+  odometry_message.pose.pose.orientation.y = quat.y();
+  odometry_message.pose.pose.orientation.z = quat.z();
+  odometry_message.pose.pose.orientation.w = quat.w();
+
+  odometry_publisher.publish(odometry_message);
 
 }

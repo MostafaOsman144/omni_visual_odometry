@@ -21,7 +21,7 @@ visual_odometry::~visual_odometry()
     
 }
 
-void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image)
+void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image, Eigen::MatrixXd& camera_transform_out)
 {
     if(first_frame)
     {   
@@ -50,26 +50,29 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image)
 
             ComputePointCloud(previous_d_frame, matched_points_previous, previous_pointcloud);
             
-            std::cout << previous_pointcloud.size() << std::endl;
-            std::cout << matched_current.size() << std::endl << std::endl;
             if(previous_pointcloud.size() == matched_current.size())
             {
                 cv::solvePnPRansac(previous_pointcloud, matched_current, camera_matrix, cv::noArray(), 
-                               incremental_rot, incremental_trans, false, 50, 0.1, 0.99,cv::noArray(), CV_P3P);
+                               incremental_rot, incremental_trans, false, 250, 0.1, 0.99,cv::noArray(), CV_P3P);
 
-            cv::Mat rotation_matrix = cv::Mat::zeros(3,3, CV_32F);
-            cv::Rodrigues(incremental_rot, rotation_matrix);
+                cv::Mat rotation_matrix = cv::Mat::zeros(3,3, CV_32F);
+                cv::Rodrigues(incremental_rot, rotation_matrix);
 
-            cv::Mat increment_cv = cv::Mat::zeros(4, 4, CV_32F);
-            //std::cout << rotation_matrix << std::endl << std::endl;
-            helper_class.buildTransformationMatFromRotAndTrans(rotation_matrix, incremental_trans, increment_cv);
-            
-            //std::cout << increment_cv << std::endl << std::endl;
-            //incremental_transform = helper_class.Convert4x4FromMatToEigen(increment_cv);
+                Eigen::MatrixXd increment = Eigen::MatrixXd::Zero(4,4);
+                cv::Mat increment_cv = cv::Mat::zeros(4,4,CV_32F);
+                helper_class.buildTransformationMatFromRotAndTrans(rotation_matrix, incremental_trans, increment_cv);
+                increment = helper_class.Convert4x4FromMatToEigen(increment_cv);
 
-            //std::cout << incremental_transform << std::endl << std::endl;
+                incremental_transform = increment.inverse();
+                camera_transform = camera_transform * incremental_transform;
 
+                camera_transform_out = camera_transform;
             }
+            else
+            {
+                camera_transform_out = camera_transform;
+            }
+            
 
         }
         else

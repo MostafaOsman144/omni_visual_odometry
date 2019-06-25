@@ -120,23 +120,17 @@ Eigen::MatrixXd visual_odometry_helpers::Convert4x4FromMatToEigen(cv::Mat& input
     return output;
 }
 
-void visual_odometry_helpers::buildTransformationMatFromRotAndTrans(const cv::Mat& rot, const cv::Mat& trans, cv::Mat& output)
+void visual_odometry_helpers::buildTransformationMatFromRotAndTrans(const cv::Mat& rot,
+                                                                    const cv::Mat& trans, 
+                                                                    cv::Mat& output)
 {   
-
-   // std::cout << rot << std::endl;
-    //std::cout << std::endl;
-
     for(int i = 0; i < 3; i++)
     {
         for(int j = 0; j < 3; j++)
         {
-            std::cout << rot << std::endl << std::endl;
-            output.row(i).col(j) = rot.at<float>(i, j);
-            std::cout << output.row(i).col(j) << " = " << rot.at<float>(i, j) << std::endl << std::endl;
+            output.at<float>(i, j) = rot.at<double>(i, j);
         }
     }
-
-    //std::cout << output << std::endl << std::endl;
 
     output.at<float>(0, 3) = trans.at<float>(0, 3);
     output.at<float>(1, 3) = trans.at<float>(1, 3);

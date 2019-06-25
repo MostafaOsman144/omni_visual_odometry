@@ -5,6 +5,8 @@
 #include<image_transport/image_transport.h>
 #include<sensor_msgs/Image.h>
 #include<sensor_msgs/CameraInfo.h>
+#include<nav_msgs/Odometry.h>
+#include<tf/tf.h>
 
 #include<message_filters/subscriber.h>
 #include<message_filters/sync_policies/approximate_time.h>
@@ -12,6 +14,8 @@
 
 #include<cv_bridge/cv_bridge.h>
 #include<opencv-3.3.1-dev/opencv2/opencv.hpp>
+
+#include<eigen3/Eigen/Dense>
 
 #include"visual_odometry.h"
 
@@ -28,6 +32,8 @@ class OdometryNodeRGBD
         ros::NodeHandle* node_handle;
         ros::NodeHandle* private_node_handle;
 
+        ros::Publisher odometry_publisher;
+
     public:
         OdometryNodeRGBD(ros::NodeHandle& node_handle, ros::NodeHandle& private_node_handle,
                          omni_visual_odometry::visual_odometry*);
@@ -36,6 +42,8 @@ class OdometryNodeRGBD
         void ImagesCallbackFunction(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
 
         void ReadIntrinicsFromParamterFile();
+
+        void PublishOdometry(Eigen::MatrixXd&);
 };
 
 
