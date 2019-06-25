@@ -13,7 +13,7 @@
 #include<message_filters/synchronizer.h>
 
 #include<cv_bridge/cv_bridge.h>
-#include<opencv-3.3.1-dev/opencv2/opencv.hpp>
+#include<opencv2/opencv.hpp>
 
 #include<eigen3/Eigen/Dense>
 

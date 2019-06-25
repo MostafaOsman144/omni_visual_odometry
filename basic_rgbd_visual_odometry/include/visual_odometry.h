@@ -1,7 +1,7 @@
 #ifndef _VISUAL_ODOMETRY_H_
 #define _VISUAL_ODOMETRY_H_
 
-#include <opencv-3.3.1-dev/opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include <vector>
 #include <iostream>
 #include <eigen3/Eigen/Dense>

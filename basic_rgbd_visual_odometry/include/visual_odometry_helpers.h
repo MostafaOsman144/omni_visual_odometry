@@ -3,7 +3,7 @@
 
 #include <eigen3/Eigen/Dense>
 #include <vector>
-#include <opencv-3.3.1-dev/opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 namespace omni_visual_odometry
 {
