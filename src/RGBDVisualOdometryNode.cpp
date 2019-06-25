@@ -26,12 +26,13 @@ OdometryNodeRGBD::OdometryNodeRGBD(ros::NodeHandle& node_handle, ros::NodeHandle
   this->private_node_handle = &private_node_handle;
 
   ReadIntrinicsFromParamterFile();
+  ReadTopicsNamesFromParameterFile();
 
   rgb_sub = std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>>(
-    new  message_filters::Subscriber<sensor_msgs::Image>(node_handle, "/camera/rgb/image_color", 1));
+    new  message_filters::Subscriber<sensor_msgs::Image>(node_handle, rgb_topic_name , 1));
   
   d_sub = std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>>(
-    new message_filters::Subscriber<sensor_msgs::Image>(node_handle, "/camera/depth/image", 1));
+    new message_filters::Subscriber<sensor_msgs::Image>(node_handle, depth_topic_name , 1));
   
   sync = std::unique_ptr<message_filters::Synchronizer<sync_policy>>(
     new message_filters::Synchronizer<sync_policy>(sync_policy(10), *rgb_sub, *d_sub));
@@ -95,7 +96,7 @@ void OdometryNodeRGBD::ReadIntrinicsFromParamterFile()
      !private_node_handle->getParam("fx", fx) ||
      !private_node_handle->getParam("fy", fy))
      {
-       std::string error_message = ros::this_node::getName() + ": Failed to load the local parameters, please check the path";
+       std::string error_message = ros::this_node::getName() + ": Failed to load the intrinsic parameters parameters, please check the path";
        ROS_ERROR("%s \n", error_message.c_str());
        ros::shutdown();
        return;
@@ -103,6 +104,18 @@ void OdometryNodeRGBD::ReadIntrinicsFromParamterFile()
 
   rgbdOdometryObject->SetIntrinsicParams(cx, cy, fx, fy);
 
+}
+
+void OdometryNodeRGBD::ReadTopicsNamesFromParameterFile()
+{
+  if(!private_node_handle->getParam("depth_topic", depth_topic_name) ||
+     !private_node_handle->getParam("rgb_topic", rgb_topic_name))
+     {
+       std::string error_message = ros::this_node::getName() + ": Failed to load the image topics ";
+       ROS_ERROR("%s \n", error_message.c_str());
+       ros::shutdown();
+       return;
+     }
 }
 
 void OdometryNodeRGBD::PublishOdometry(Eigen::MatrixXd& transform)

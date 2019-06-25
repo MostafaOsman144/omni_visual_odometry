@@ -10,3 +10,9 @@ fx: 525.0
 
 # Focal length in Y direction
 fy: 525.0
+
+# RGBD Depth image topic
+depth_topic: /camera/depth/image
+
+#RGBD rgb image topic
+rgb_topic: /camera/rgb/image_color

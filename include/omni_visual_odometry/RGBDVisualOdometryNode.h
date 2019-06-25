@@ -34,6 +34,9 @@ class OdometryNodeRGBD
 
         ros::Publisher odometry_publisher;
 
+        std::string depth_topic_name;
+        std::string rgb_topic_name;
+
     public:
         OdometryNodeRGBD(ros::NodeHandle& node_handle, ros::NodeHandle& private_node_handle,
                          omni_visual_odometry::visual_odometry*);
@@ -42,6 +45,7 @@ class OdometryNodeRGBD
         void ImagesCallbackFunction(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
 
         void ReadIntrinicsFromParamterFile();
+        void ReadTopicsNamesFromParameterFile();
 
         void PublishOdometry(Eigen::MatrixXd&);
 };
