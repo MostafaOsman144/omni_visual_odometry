@@ -6,7 +6,6 @@ visual_odometry::visual_odometry(int threshold_input)
 :threshold(threshold_input)
 {
     orb_detector = cv::ORB::create();
-    orb_detector->setMaxFeatures(1500);
     orb_matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
 
     if(threshold > 1 || threshold < 0)
@@ -54,7 +53,7 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image, 
             if(previous_pointcloud.size() == matched_current.size())
             {
                 cv::solvePnPRansac(previous_pointcloud, matched_current, camera_matrix, cv::noArray(), 
-                               incremental_rot, incremental_trans, false, 800, 0.1, 0.99,cv::noArray(), CV_ITERATIVE);
+                               incremental_rot, incremental_trans, false, 250, 0.1, 0.99,cv::noArray(), CV_P3P);
 
                 cv::Mat rotation_matrix = cv::Mat::zeros(3,3, CV_32F);
                 cv::Rodrigues(incremental_rot, rotation_matrix);
@@ -168,8 +167,8 @@ void visual_odometry::ComputePointCloud(const cv::Mat& depth_image, const std::v
         {
             double x = (matched_keypoints[i].pt.x - rgbd_camera_intrinsics.cx) * z / rgbd_camera_intrinsics.fx;
             double y = (matched_keypoints[i].pt.y - rgbd_camera_intrinsics.cy) * z / rgbd_camera_intrinsics.fy;
+
             point_cloud.push_back(cv::Point3f(x, y, z));
-            std::cout << z << std::endl << std::endl;
         }
         else
         {
