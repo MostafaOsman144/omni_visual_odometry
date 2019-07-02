@@ -6,6 +6,8 @@ visual_odometry::visual_odometry(int threshold_input)
 :threshold(threshold_input)
 {
     orb_detector = cv::ORB::create();
+    orb_detector->setScaleFactor(1.5f);
+    orb_detector->setMaxFeatures(2000);
     orb_matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
 
     if(threshold > 1 || threshold < 0)
@@ -53,17 +55,20 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image, 
             if(previous_pointcloud.size() == matched_current.size())
             {
                 cv::solvePnPRansac(previous_pointcloud, matched_current, camera_matrix, cv::noArray(), 
-                               incremental_rot, incremental_trans, false, 250, 0.1, 0.99,cv::noArray(), CV_P3P);
+                               incremental_rot, incremental_trans, false, 2000, 0.1, 0.99,cv::noArray(), CV_P3P);
                 
                 cv::Mat rotation_matrix = cv::Mat::zeros(3,3, CV_32F);
                 cv::Rodrigues(incremental_rot, rotation_matrix);
 
+                std::cout << rotation_matrix << std::endl << std::endl;
+                std::cout << incremental_trans << std::endl << std::endl;
+
                 Eigen::MatrixXd increment = Eigen::MatrixXd::Zero(4,4);
                 cv::Mat increment_cv = cv::Mat::zeros(4,4,CV_32F);
                 helper_class.buildTransformationMatFromRotAndTrans(rotation_matrix, incremental_trans, increment_cv);
-                
+                //std::cout << increment_cv << std::endl << std::endl;
                 increment = helper_class.Convert4x4FromMatToEigen(increment_cv);
-                
+                //std::cout << increment << std::endl << std::endl;
                 incremental_transform = increment.inverse();
                 camera_transform = camera_transform * incremental_transform;
 
