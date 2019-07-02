@@ -19,6 +19,8 @@
 
 #include"visual_odometry.h"
 
+#include<fstream>
+
 class OdometryNodeRGBD
 {
     private:
@@ -36,6 +38,7 @@ class OdometryNodeRGBD
 
         std::string depth_topic_name;
         std::string rgb_topic_name;
+        std::ofstream myfile;
 
     public:
         OdometryNodeRGBD(ros::NodeHandle& node_handle, ros::NodeHandle& private_node_handle,
@@ -48,6 +51,8 @@ class OdometryNodeRGBD
         void ReadTopicsNamesFromParameterFile();
 
         void PublishOdometry(Eigen::MatrixXd&);
+
+        void PrintOdometry(Eigen::MatrixXd&);
 };
 
 

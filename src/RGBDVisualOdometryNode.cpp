@@ -41,12 +41,14 @@ OdometryNodeRGBD::OdometryNodeRGBD(ros::NodeHandle& node_handle, ros::NodeHandle
 
   odometry_publisher = node_handle.advertise<nav_msgs::Odometry>("visual_odometry", 1);
 
+  myfile.open("/home/mostafa/catkin_ws/odometry.txt");
+  myfile << "timestamp tx ty tz qx qy qz qw \n";
 }
 
 /// VisualOdometry Class destructor, not used here, all points are unique_ptrs
 OdometryNodeRGBD::~OdometryNodeRGBD()
 {
-//  delete rgbdOdometryObject;
+  myfile.close();
 }
 
 /// The images callback function, here the images are received through from the image messages, and through cv_bridge the
@@ -80,6 +82,7 @@ void OdometryNodeRGBD::ImagesCallbackFunction(const sensor_msgs::ImageConstPtr& 
   rgbdOdometryObject->ComputeOdometry(cv_rgb_image, cv_depth_image, output_transform);
 
   PublishOdometry(output_transform);
+  PrintOdometry(output_transform);
   std::cout << ros::Time::now() << std::endl;
   std::cout << output_transform << std::endl << std::endl;
 
@@ -137,7 +140,7 @@ void OdometryNodeRGBD::PublishOdometry(Eigen::MatrixXd& transform)
 
   odometry_message.pose.pose.position.x = transform(0,3);
   odometry_message.pose.pose.position.y = transform(1,3);
-  odometry_message.pose.pose.position.z = 0;
+  odometry_message.pose.pose.position.z = transform(2,3);
 
   odometry_message.pose.pose.orientation.x = quat.x();
   odometry_message.pose.pose.orientation.y = quat.y();
@@ -146,4 +149,17 @@ void OdometryNodeRGBD::PublishOdometry(Eigen::MatrixXd& transform)
 
   odometry_publisher.publish(odometry_message);
 
+}
+
+void OdometryNodeRGBD::PrintOdometry(Eigen::MatrixXd& transform)
+{
+  tf::Matrix3x3 rotation_part(transform(0, 0), transform(0, 1), transform(0, 2),
+                              transform(1, 0), transform(1, 1), transform(1, 2),
+                              transform(2, 0), transform(2, 1), transform(2, 2));
+
+  tf::Quaternion quat;
+  rotation_part.getRotation(quat);
+
+  myfile << ros::Time::now() << " " << transform(0,1) << " " << transform(1,3) << " " << transform(2,3) << " ";
+  myfile << quat.x() << " " << quat.y() << " " << quat.z() << " " << quat.w() << "\n";
 }
