@@ -131,10 +131,10 @@ void visual_odometry_helpers::buildTransformationMatFromRotAndTrans(const cv::Ma
             output.at<float>(i, j) = rot.at<double>(i, j);
         }
     }
-
-    output.at<float>(0, 3) = trans.at<float>(0, 3);
-    output.at<float>(1, 3) = trans.at<float>(1, 3);
-    output.at<float>(2, 3) = trans.at<float>(2, 3);
+    
+    output.at<float>(0, 3) = trans.at<double>(0, 0);
+    output.at<float>(1, 3) = trans.at<double>(1, 0);
+    output.at<float>(2, 3) = trans.at<double>(2, 0);
     output.at<float>(3, 3) = 1;
 }
 

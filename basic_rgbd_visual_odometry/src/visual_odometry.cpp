@@ -54,15 +54,16 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image, 
             {
                 cv::solvePnPRansac(previous_pointcloud, matched_current, camera_matrix, cv::noArray(), 
                                incremental_rot, incremental_trans, false, 250, 0.1, 0.99,cv::noArray(), CV_P3P);
-
+                
                 cv::Mat rotation_matrix = cv::Mat::zeros(3,3, CV_32F);
                 cv::Rodrigues(incremental_rot, rotation_matrix);
 
                 Eigen::MatrixXd increment = Eigen::MatrixXd::Zero(4,4);
                 cv::Mat increment_cv = cv::Mat::zeros(4,4,CV_32F);
                 helper_class.buildTransformationMatFromRotAndTrans(rotation_matrix, incremental_trans, increment_cv);
+                
                 increment = helper_class.Convert4x4FromMatToEigen(increment_cv);
-
+                
                 incremental_transform = increment.inverse();
                 camera_transform = camera_transform * incremental_transform;
 
