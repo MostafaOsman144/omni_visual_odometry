@@ -80,8 +80,7 @@ void OdometryNodeRGBD::ImagesCallbackFunction(const sensor_msgs::ImageConstPtr& 
   rgbdOdometryObject->ComputeOdometry(cv_rgb_image, cv_depth_image, output_transform);
 
   PublishOdometry(output_transform);
-  //std::cout << ros::Time::now() << std::endl;
-  //std::cout << output_transform << std::endl << std::endl;
+  std::cout << output_transform << std::endl << std::endl;
 
 }
 
