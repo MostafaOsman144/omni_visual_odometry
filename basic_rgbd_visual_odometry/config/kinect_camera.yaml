@@ -11,6 +11,9 @@ fx: 525.0
 # Focal length in Y direction
 fy: 525.0
 
+# Camera name
+camera_name: kinect
+
 # RGBD Depth image topic
 depth_topic: /camera/depth/image
 
