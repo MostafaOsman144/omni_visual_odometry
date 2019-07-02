@@ -1,6 +1,6 @@
 <?xml version="2.0"?>
 <launch>
 	<node pkg="omni_visual_odometry" type="omni_visual_odometry_rgbd" name="omni_visual_odometry_rgbd" output="screen" >
-		<rosparam command="load" file="$(find omni_visual_odometry)/basic_rgbd_visual_odometry/config/astra_camera.yaml"/>
+		<rosparam command="load" file="$(find omni_visual_odometry)/basic_rgbd_visual_odometry/config/kinect_camera.yaml"/>
 	</node>
 </launch>
