@@ -20,7 +20,8 @@ private:
         double cy; //y position of the optical center
         double fx; //focal length in x direction
         double fy; //focal length in y direction
-
+        std::string camera_name;
+        
     };
     
     cv::Mat current_rgb_frame;
@@ -90,7 +91,7 @@ public:
     void ComputePointCloud(const cv::Mat&, const std::vector<cv::KeyPoint>&, std::vector<cv::Point3f>&);
 
     // Sets the intrinsic parameters for the camera which is being used
-    void SetIntrinsicParams(double cx, double cy, double fx, double fy);
+    void SetIntrinsicParams(double cx, double cy, double fx, double fy, std::string camera_name);
 
     // First frame initialization, before the visual odometry process starts
     void InitializeFirstFrame();

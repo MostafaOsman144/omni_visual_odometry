@@ -90,11 +90,13 @@ void OdometryNodeRGBD::ReadIntrinicsFromParamterFile()
   double cy;
   double fx;
   double fy;
+  std::string camera_name;
 
   if(!private_node_handle->getParam("cx", cx) ||
      !private_node_handle->getParam("cy", cy) ||
      !private_node_handle->getParam("fx", fx) ||
-     !private_node_handle->getParam("fy", fy))
+     !private_node_handle->getParam("fy", fy) ||
+     !private_node_handle->getParam("camera_name", camera_name))
      {
        std::string error_message = ros::this_node::getName() + ": Failed to load the intrinsic parameters parameters, please check the path";
        ROS_ERROR("%s \n", error_message.c_str());
@@ -102,7 +104,7 @@ void OdometryNodeRGBD::ReadIntrinicsFromParamterFile()
        return;
      }
 
-  rgbdOdometryObject->SetIntrinsicParams(cx, cy, fx, fy);
+  rgbdOdometryObject->SetIntrinsicParams(cx, cy, fx, fy, camera_name);
 
 }
 

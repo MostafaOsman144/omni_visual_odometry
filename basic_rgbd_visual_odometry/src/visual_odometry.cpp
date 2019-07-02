@@ -183,13 +183,15 @@ void visual_odometry::ComputePointCloud(const cv::Mat& depth_image, const std::v
 }
 
 
-void visual_odometry::SetIntrinsicParams(double cx, double cy, double fx, double fy)
+void visual_odometry::SetIntrinsicParams(double cx, double cy, double fx, double fy, std::string camera_name)
 {
     rgbd_camera_intrinsics.cx = cx;
     rgbd_camera_intrinsics.cy = cy;
     rgbd_camera_intrinsics.fx = fx;
     rgbd_camera_intrinsics.fy = fy;
+    rgbd_camera_intrinsics.camera_name = camera_name;
 
+    std::cout << "Reading the parameters of an " << camera_name << " camera" << std::endl;
     std::cout << "The intrinsics were defined successfully. The values are:" << std::endl;
     std::cout << "cx = " << rgbd_camera_intrinsics.cx << std::endl;
     std::cout << "cy = " << rgbd_camera_intrinsics.cy << std::endl;

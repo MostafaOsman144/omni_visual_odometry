@@ -11,6 +11,9 @@ fx: 570.1754150390625
 # Focal length in Y direction
 fy: 570.1754150390625
 
+# Camera Name
+camera_name: astra
+
 # RGBD Depth image topic
 depth_topic: /summit_xl/front_rgbd_camera/depth_registered/image_raw
 
