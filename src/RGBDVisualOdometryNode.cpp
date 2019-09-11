@@ -160,6 +160,6 @@ void OdometryNodeRGBD::PrintOdometry(Eigen::MatrixXd& transform)
   tf::Quaternion quat;
   rotation_part.getRotation(quat);
 
-  myfile << ros::Time::now() << " " << transform(0,1) << " " << transform(1,3) << " " << transform(2,3) << " ";
+  myfile << ros::Time::now() << " " << transform(0,3) << " " << transform(1,3) << " " << transform(2,3) << " ";
   myfile << quat.x() << " " << quat.y() << " " << quat.z() << " " << quat.w() << "\n";
 }
