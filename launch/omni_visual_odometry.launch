@@ -1,5 +1,7 @@
 <?xml version="2.0"?>
-<launch>
+<launch>	
+	<rosparam param="use_sim_time">true</rosparam>
+	
 	<node pkg="omni_visual_odometry" type="omni_visual_odometry_rgbd" name="omni_visual_odometry_rgbd" output="screen" >
 		<rosparam command="load" file="$(find omni_visual_odometry)/basic_rgbd_visual_odometry/config/kinect_camera.yaml"/>
 	</node>

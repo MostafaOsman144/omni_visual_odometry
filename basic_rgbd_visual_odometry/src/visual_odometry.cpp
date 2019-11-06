@@ -6,7 +6,7 @@ visual_odometry::visual_odometry(int threshold_input)
 :threshold(threshold_input)
 {
     orb_detector = cv::ORB::create();
-    orb_detector->setScaleFactor(1.5f);
+    orb_detector->setScaleFactor(1.2f);
     orb_detector->setMaxFeatures(2000);
     orb_matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
 
@@ -182,6 +182,7 @@ void visual_odometry::ComputePointCloud(const cv::Mat& depth_image, const std::v
         }
         
     }
+
 }
 
 
@@ -228,6 +229,7 @@ void visual_odometry::InitializeFirstFrame()
             double y = (previous_frame_keypoints[i].pt.y - rgbd_camera_intrinsics.cy) * z / rgbd_camera_intrinsics.fy;
 
             previous_pointcloud.push_back(cv::Point3f(x, y, z));
+
         }
         
     }

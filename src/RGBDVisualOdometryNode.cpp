@@ -8,6 +8,16 @@ int main(int argc, char **argv)
     omni_visual_odometry::visual_odometry odometryObject(0.8f);
 
     OdometryNodeRGBD rgbdOdometryNode(node_handle, private_node_handle, &odometryObject);
+    ros::Time::init();
+
+    /*
+    ros::Rate r(5);
+    while(ros::ok())
+    {
+      ros::spinOnce();
+      r.sleep();
+    }
+    */
 
     ros::spin();
 
@@ -42,7 +52,9 @@ OdometryNodeRGBD::OdometryNodeRGBD(ros::NodeHandle& node_handle, ros::NodeHandle
   odometry_publisher = node_handle.advertise<nav_msgs::Odometry>("visual_odometry", 1);
 
   myfile.open("/home/mostafa/catkin_ws/odometry.txt");
-  myfile << "timestamp tx ty tz qx qy qz qw \n";
+  //myfile << "timestamp tx ty tz qx qy qz qw \n";
+
+  ros::Time::init();
 }
 
 /// VisualOdometry Class destructor, not used here, all points are unique_ptrs
@@ -78,14 +90,14 @@ void OdometryNodeRGBD::ImagesCallbackFunction(const sensor_msgs::ImageConstPtr& 
 
   cv::cvtColor(cv_rgb_image, cv_rgb_image, cv::COLOR_BGR2GRAY);
 
-  Eigen::MatrixXd output_transform = Eigen::MatrixXd::Zero(4,4);
+  Eigen::MatrixXd output_transform = Eigen::MatrixXd::Identity(4,4);
   rgbdOdometryObject->ComputeOdometry(cv_rgb_image, cv_depth_image, output_transform);
 
   PublishOdometry(output_transform);
   PrintOdometry(output_transform);
   std::cout << ros::Time::now() << std::endl;
   std::cout << output_transform << std::endl << std::endl;
-
+  
 }
 
 void OdometryNodeRGBD::ReadIntrinicsFromParamterFile()
@@ -151,6 +163,8 @@ void OdometryNodeRGBD::PublishOdometry(Eigen::MatrixXd& transform)
 
 }
 
+//@brief The PrintOdometry method prints the visual odometry outputed transformations to a file to be used for evaluation 
+// with respect to the ground truth in case of using tum dataset. 
 void OdometryNodeRGBD::PrintOdometry(Eigen::MatrixXd& transform)
 {
   tf::Matrix3x3 rotation_part(transform(0, 0), transform(0, 1), transform(0, 2),
