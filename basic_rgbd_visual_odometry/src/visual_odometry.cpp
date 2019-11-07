@@ -55,7 +55,7 @@ void visual_odometry::ComputeOdometry(cv::Mat& rgb_image, cv::Mat& depth_image, 
             if(previous_pointcloud.size() == matched_current.size())
             {
                 cv::solvePnPRansac(previous_pointcloud, matched_current, camera_matrix, cv::noArray(), 
-                               incremental_rot, incremental_trans, false, 2000, 0.1, 0.99,cv::noArray(), CV_P3P);
+                               incremental_rot, incremental_trans, false, 2000, 0.1, 0.99,cv::noArray(), CV_ITERATIVE);
                 
                 cv::Mat rotation_matrix = cv::Mat::zeros(3,3, CV_32F);
                 cv::Rodrigues(incremental_rot, rotation_matrix);
@@ -206,6 +206,11 @@ void visual_odometry::SetIntrinsicParams(double cx, double cy, double fx, double
     camera_matrix.at<float>(1,1) = rgbd_camera_intrinsics.fy;
     camera_matrix.at<float>(0,2) = rgbd_camera_intrinsics.cx;
     camera_matrix.at<float>(1,2) = rgbd_camera_intrinsics.cy;
+    camera_matrix.at<float>(2,2) = 1.0;
+
+    std::cout << "The camera matrix is: " << std::endl;
+    std::cout << camera_matrix << std::endl;
+    std::cout << std::endl;
 
 }
 
