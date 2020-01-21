@@ -148,10 +148,10 @@ void visual_odometry::ComputeMatchedFeatures()
                     good_matched_points, img_matches, cv::Scalar::all(-1), cv::Scalar::all(-1),
                     std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
-//    cv::imshow("Good Matches", img_matches);
-//    cv::waitKey(10);
-//    cv::imshow("Depth Map", current_d_frame);
-//    cv::waitKey(10);
+    cv::imshow("Good Matches", img_matches);
+    cv::waitKey(10);
+    cv::imshow("Depth Map", current_d_frame);
+    cv::waitKey(10);
 
 }
 
