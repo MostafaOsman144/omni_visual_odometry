@@ -8,16 +8,7 @@ int main(int argc, char **argv)
     omni_visual_odometry::visual_odometry odometryObject(0.8f);
 
     OdometryNodeRGBD rgbdOdometryNode(node_handle, private_node_handle, &odometryObject);
-    ros::Time::init();
-
-    /*
-    ros::Rate r(5);
-    while(ros::ok())
-    {
-      ros::spinOnce();
-      r.sleep();
-    }
-    */
+//    ros::Time::init();
 
     ros::spin();
 
@@ -45,16 +36,16 @@ OdometryNodeRGBD::OdometryNodeRGBD(ros::NodeHandle& node_handle, ros::NodeHandle
     new message_filters::Subscriber<sensor_msgs::Image>(node_handle, depth_topic_name , 1));
   
   sync = std::unique_ptr<message_filters::Synchronizer<sync_policy>>(
-    new message_filters::Synchronizer<sync_policy>(sync_policy(10), *rgb_sub, *d_sub));
+    new message_filters::Synchronizer<sync_policy>(sync_policy(1), *rgb_sub, *d_sub));
   
   sync->registerCallback(boost::bind(&OdometryNodeRGBD::ImagesCallbackFunction, this, _1, _2));
 
   odometry_publisher = node_handle.advertise<nav_msgs::Odometry>("visual_odometry", 1);
 
-  myfile.open("/home/mostafa/catkin_ws/odometry.txt");
+  myfile.open("/home/inst/catkin_ws/odometry.txt");
   //myfile << "timestamp tx ty tz qx qy qz qw \n";
 
-  ros::Time::init();
+//  ros::Time::init();
 }
 
 /// VisualOdometry Class destructor, not used here, all points are unique_ptrs
@@ -95,18 +86,17 @@ void OdometryNodeRGBD::ImagesCallbackFunction(const sensor_msgs::ImageConstPtr& 
 
   PublishOdometry(output_transform);
   PrintOdometry(output_transform);
-  std::cout << ros::Time::now() << std::endl;
-  std::cout << output_transform << std::endl << std::endl;
+
   
 }
 
 void OdometryNodeRGBD::ReadIntrinicsFromParamterFile()
 { 
-  double cx;
-  double cy;
-  double fx;
-  double fy;
-  std::string camera_name;
+  double cx = 0;
+  double cy = 0;
+  double fx = 0;
+  double fy = 0;
+  std::string camera_name = " ";
 
   if(!private_node_handle->getParam("cx", cx) ||
      !private_node_handle->getParam("cy", cy) ||
@@ -147,7 +137,7 @@ void OdometryNodeRGBD::PublishOdometry(Eigen::MatrixXd& transform)
   rotation_part.getRotation(quat);
 
   odometry_message.header.stamp = ros::Time::now();
-  odometry_message.header.frame_id = "odom_frame";
+  odometry_message.header.frame_id = "odom";
   odometry_message.child_frame_id = "camera_frame";
 
   odometry_message.pose.pose.position.x = transform(0,3);
@@ -163,8 +153,8 @@ void OdometryNodeRGBD::PublishOdometry(Eigen::MatrixXd& transform)
 
 }
 
-//@brief The PrintOdometry method prints the visual odometry outputed transformations to a file to be used for evaluation 
-// with respect to the ground truth in case of using tum dataset. 
+// brief The PrintOdometry method prints the visual odometry outputed transformations to a file to be used for evaluation
+// with respect to the ground truth in case of using tum dataset.
 void OdometryNodeRGBD::PrintOdometry(Eigen::MatrixXd& transform)
 {
   tf::Matrix3x3 rotation_part(transform(0, 0), transform(0, 1), transform(0, 2),

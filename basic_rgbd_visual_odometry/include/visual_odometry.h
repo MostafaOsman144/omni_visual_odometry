@@ -2,6 +2,8 @@
 #define _VISUAL_ODOMETRY_H_
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/xfeatures2d/nonfree.hpp>
+#include <opencv2/xfeatures2d.hpp>
 #include <vector>
 #include <iostream>
 #include <eigen3/Eigen/Dense>
@@ -36,6 +38,9 @@ private:
     // Feature Matcher
     cv::Ptr<cv::DescriptorMatcher> orb_matcher;
 
+    // Clahe
+    cv::Ptr<cv::CLAHE> clahe_filter;
+
     // Initializing the old image descriptor and keypoint vector
     std::vector<cv::KeyPoint> previous_frame_keypoints;
     cv::Mat previous_frame_descriptor;
@@ -53,7 +58,7 @@ private:
     std::vector<cv::KeyPoint> matched_points_previous;
 
     // Lowe's filtering threshold
-    const float threshold;
+    float threshold;
 
     // PointClouds for previous and current frames
     std::vector<cv::Point3f> current_pointcloud;
@@ -74,7 +79,7 @@ private:
     Eigen::MatrixXd incremental_transform;
 
 public:
-    visual_odometry(int);
+    visual_odometry(float);
     ~visual_odometry();
 
     // Class Functionality starts at this function

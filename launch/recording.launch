@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+
+<launch>
+	<node pkg="rosbag" name="recording" type="record" args="record -o /home/inst/Downloads/ /visual_odometry /pose" />
+</launch>
