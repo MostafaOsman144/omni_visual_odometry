@@ -8,7 +8,7 @@ int main(int argc, char **argv)
     omni_visual_odometry::visual_odometry odometryObject(0.8f);
 
     OdometryNodeRGBD rgbdOdometryNode(node_handle, private_node_handle, &odometryObject);
-//    ros::Time::init();
+    ros::Time::init();
 
     ros::spin();
 
